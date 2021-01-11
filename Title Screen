@@ -1,0 +1,230 @@
+import pygame
+import random
+import os
+
+#Constants - Game
+WIDTH = 600
+HEIGHT = 300
+FPS = 30
+GROUND = HEIGHT - 30
+SLOW = 3
+FAST = 8
+
+#Constants - Physics
+PLAYER_ACC = 0.9
+PLAYER_FRICTION = -0.12
+PLAYER_GRAV = 0.9
+vec = pygame.math.Vector2
+
+#Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0 )
+RED = (255, 0, 0,)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+
+#Asset Folders
+game_folder = os.path.dirname(__file__)
+img_folder = os.path.join(game_folder, "img")
+
+#Draw text function
+font_name = pygame.font.match_font('arial')
+def draw_text(surf, text, size, x, y,):
+    font = pygame.font.Font(font_name, size)
+    text_surface = font.render(text, True, GREEN)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x, y)
+    surf.blit(text_surface, text_rect)
+
+#Start screen function
+def show_start_screen():
+
+    #screen.blit(background, background_rect)
+    screen.fill(BLACK)
+    draw_text(screen, "Sole Journey", 64, WIDTH / 2, HEIGHT / 4)
+    draw_text(screen, "Arrow keys to move, Space to jump", 22, WIDTH / 2, HEIGHT / 2)
+    draw_text(screen, "Press any key to continue", 18, WIDTH / 2, HEIGHT * 3 / 4)
+    pygame.display.flip()
+
+    waiting = True
+    while waiting:
+        clock.tick(FPS)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYUP:
+                print("Key pressed to start game...")
+                waiting = False
+
+#Player Class
+class Player(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load(os.path.join(img_folder, "Foot player.png")).convert()
+        self.right = [
+                    pygame.image.load(os.path.join(img_folder, "foot-sprite_00.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "foot-sprite_01.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "foot-sprite_02.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "foot-sprite_03.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "foot-sprite_04.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "foot-sprite_05.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "foot-sprite_06.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "foot-sprite_07.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "foot-sprite_08.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "foot-sprite_09.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "foot-sprite_10.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "foot-sprite_11.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "foot-sprite_12.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "foot-sprite_13.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "foot-sprite_14.png")).convert()
+                    ]
+        self.left = [
+                    pygame.image.load(os.path.join(img_folder, "sprite-left_00.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "sprite-left_01.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "sprite-left_02.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "sprite-left_03.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "sprite-left_04.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "sprite-left_05.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "sprite-left_06.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "sprite-left_07.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "sprite-left_08.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "sprite-left_09.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "sprite-left_10.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "sprite-left_11.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "sprite-left_12.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "sprite-left_13.png")).convert(),
+                    pygame.image.load(os.path.join(img_folder, "sprite-left_14.png")).convert()
+                    ]
+        self.foot_count = 0
+        self.action = "IDLE"
+        self.image = self.right[self.foot_count]
+        self.image = pygame.transform.scale(self.image, (100,100))
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.pos = vec(10, GROUND -60)
+        self.vel = vec(0, 0)
+        self.acc = vec(0, 0)
+
+    def update(self):
+
+        self.acc = vec(0, PLAYER_GRAV)
+        self.action = "IDLE"
+
+        #Returns a list of keys pressed
+        keystate = pygame.key.get_pressed()
+        if keystate[pygame.K_RIGHT]:
+            self.acc.x += PLAYER_ACC
+            self.action = "RIGHT"
+        if keystate[pygame.K_LEFT]:
+            self.acc.x += -PLAYER_ACC
+            self.action = "LEFT"
+        if keystate[pygame.K_UP]:
+            self.rect.y += -10
+        if keystate[pygame.K_DOWN]:
+            self.rect.y += 10
+        if self.vel.y == 0 and keystate[pygame.K_SPACE]:
+            self.vel.y = -20
+
+        #Movement Animation
+        if self.action == "LEFT":
+            self.image = self.left[self.foot_count]
+            self.image.set_colorkey(BLACK)
+            self.foot_count += 1
+            if self.foot_count > 14:
+                self.foot_count = 0
+        elif self.action == "IDLE":
+            self.image = self.left[0]
+            self.image.set_colorkey(BLACK)
+            self.foot_count = 0
+
+        if self.action == "RIGHT":
+            self.image = self.right[self.foot_count]
+            self.image.set_colorkey(BLACK)
+            self.foot_count += 1
+            if self.foot_count > 14:
+                self.foot_count = 0
+        elif self.action == "IDLE":
+            self.image = self.right[0]
+            self.image.set_colorkey(BLACK)
+            self.foot_count = 0
+
+        #Applies friction
+        self.acc.x += self.vel.x * PLAYER_FRICTION
+
+        #Nerd equations - Equation of motion
+        self.vel += self.acc
+        self.pos += self.vel + 0.5 * self.acc
+
+        #Warp around screen
+        if self.pos.x > WIDTH:
+            self.pos.x = 0
+        if self.pos.x < 0:
+            self.pos.x = WIDTH
+
+        #Simulate Ground
+        if self.pos.y > GROUND:
+            self.pos.y = GROUND + 1
+            self.vel.y = 0
+
+        #Player postion based on nerd code above
+        self.rect.midbottom = self.pos
+
+class Platform(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load(os.path.join(img_folder, "Hand Platform.png")).convert()
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.x = 10
+        self.rect.y = HEIGHT - 180
+
+    def update(self):
+        self.rect.x += -5
+        if self.rect.right < 0:
+            self.rect.left = WIDTH 
+
+#initialize Variables
+pygame.init()
+pygame.mixer.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("My Game")
+
+clock = pygame.time.Clock()
+
+#Sprite Groups
+all_sprites = pygame.sprite.Group()
+
+player = Player()
+platform = Platform()
+
+all_sprites.add(player)
+all_sprites.add(platform)
+
+start = True
+run = True
+while run:
+
+    #Show start screen once
+    if start:
+        show_start_screen()
+        start = False
+        
+    clock.tick(FPS)
+
+    #Process Events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+
+    #update
+    all_sprites.update()
+
+    #Draw
+    screen.fill(BLUE)
+    all_sprites.draw(screen)
+
+    #Flip
+    pygame.display.flip()
+
+pygame.quit()
